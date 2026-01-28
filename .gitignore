@@ -1,0 +1,23 @@
+.env
+__pycache__/
+*.pyc
+output/
+*.pdf
+.env
+EOF
+
+# Local / editor
+.claude/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+
+# Secrets / env
+.env
+*.local.yaml
+*.local.json
+
+# Generated artifacts
+output/

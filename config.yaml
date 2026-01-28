@@ -1,0 +1,19 @@
+# PDF to Podcast Configuration
+# Vestas Annual Report 2024
+
+document:
+  path: "vestas_annual_report_2024.pdf"
+  title: "Vestas Annual Report 2024"
+
+sections:
+  - name: "Letter from Chair & CEO"
+    pages: [3, 4]
+
+  - name: "Market outlook"
+    pages: [17, 18]
+
+  - name: "Corporate strategy"
+    pages: [19, 20, 21]
+
+  - name: "Service"
+    pages: [31]
