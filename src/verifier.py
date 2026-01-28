@@ -30,7 +30,7 @@ from .prompts import (
 
 # Model selection for cost optimization
 EXTRACTION_MODEL = "claude-sonnet-4-20250514"  # Sonnet for claim extraction (needs accuracy)
-VERIFICATION_MODEL = "claude-haiku-4-20250514"  # Haiku for verification (cheaper, still accurate)
+VERIFICATION_MODEL = "claude-haiku-4-5-20251001"  # Haiku for verification (cheaper, still accurate)
 BATCH_SIZE = 15  # Claims per verification batch
 
 
