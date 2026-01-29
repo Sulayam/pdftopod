@@ -2,10 +2,6 @@
 data/*.pdf
 *.pdf
 
-# Output artifacts
-output/*.md
-output/*.json
-
 # Local / editor
 .claude/
 .vscode/
