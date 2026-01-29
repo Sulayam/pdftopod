@@ -120,7 +120,7 @@ class GeneratorAgent:
             )
 
     def _generate_dialogue(self, plan: PodcastPlan, doc: ExtractedDocument) -> PodcastScript:
-        """Generate the actual dialogue script."""
+        """Generate the actual dialogue script with length enforcement."""
         key_points_with_sources = self._format_key_points_with_sources(doc)
 
         # Format plan for prompt
@@ -153,10 +153,24 @@ class GeneratorAgent:
         )
 
         response_text = response.content[0].text
-
-        # Extract JSON
         json_str = self._extract_json(response_text)
+        script = self._parse_dialogue_json(json_str, plan)
 
+        # Check if script is too short and expand if needed
+        min_words = 1800
+        max_expansion_attempts = 2
+
+        for attempt in range(max_expansion_attempts):
+            if script.word_count >= min_words:
+                break
+
+            print(f"[Generator] Script too short ({script.word_count} words), expanding (attempt {attempt + 1})...")
+            script = self._expand_script(script, plan, key_points_with_sources)
+
+        return script
+
+    def _parse_dialogue_json(self, json_str: str, plan: PodcastPlan) -> PodcastScript:
+        """Parse dialogue JSON into PodcastScript."""
         try:
             data = json.loads(json_str)
             dialogue = [
@@ -175,14 +189,57 @@ class GeneratorAgent:
             )
         except (json.JSONDecodeError, KeyError) as e:
             print(f"[Generator] Warning: Failed to parse dialogue JSON: {e}")
-            print(f"[Generator] Raw response: {response_text[:1000]}...")
-            # Return empty script
             return PodcastScript(
                 title=plan.title,
                 dialogue=[],
                 friction_moment_summary=plan.friction_moment,
                 takeaway_summary=plan.takeaway
             )
+
+    def _expand_script(self, script: PodcastScript, plan: PodcastPlan, key_points_with_sources: str) -> PodcastScript:
+        """Expand a short script to meet the word count target."""
+        current_dialogue = "\n".join([
+            f"{d.speaker}: {d.text}" for d in script.dialogue
+        ])
+
+        expand_prompt = f"""The following podcast script is too short at {script.word_count} words. It MUST be expanded to 2000-2200 words.
+
+CURRENT SCRIPT ({script.word_count} words):
+{current_dialogue}
+
+SOURCE KEY POINTS (for adding more detail):
+{key_points_with_sources}
+
+EXPANSION REQUIREMENTS:
+1. Keep ALL existing dialogue but ADD MORE exchanges between Alex and Jordan
+2. Expand discussions of statistics - add context, implications, comparisons
+3. Add more back-and-forth reactions: "Wait, really?", "That's surprising", "Tell me more"
+4. Explore implications of key points more deeply
+5. Add more questions from Jordan challenging the information
+6. Target 2000-2200 words total - you are REQUIRED to hit this target
+7. Maintain the same friction moment and takeaway themes
+
+Return the EXPANDED script as JSON:
+{{
+    "title": "{script.title}",
+    "dialogue": [
+        {{"speaker": "Alex", "text": "dialogue text", "emotion_cue": "[optional]" or null}}
+    ],
+    "friction_moment_summary": "{script.friction_moment_summary}",
+    "takeaway_summary": "{script.takeaway_summary}"
+}}"""
+
+        response = self.client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=8192,
+            messages=[
+                {"role": "user", "content": expand_prompt}
+            ]
+        )
+
+        response_text = response.content[0].text
+        json_str = self._extract_json(response_text)
+        return self._parse_dialogue_json(json_str, plan)
 
     def _extract_json(self, text: str) -> str:
         """Extract JSON from response text, handling markdown code blocks."""

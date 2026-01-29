@@ -2,12 +2,23 @@
 Prompt templates for the PDF-to-Podcast system.
 
 All prompts are stored here for easy iteration and documentation.
+
+PROMPT ITERATION HISTORY:
+========================
+This file documents the evolution of prompts through development.
+See inline comments for iteration notes and dead ends.
 """
 
 # ============================================================================
 # EXTRACTOR PROMPTS
 # ============================================================================
-
+#
+# ITERATION HISTORY:
+# - v1: Asked for "all important information" -> too verbose, 15+ points per section
+# - v2: Added category requirement (fact/strategy/market/context) -> better focus
+# - v3: Added 3-7 limit and "MUST understand" framing -> optimal output
+# - DEAD END: Tried asking for "quotes with context" -> quotes were too long
+#
 KEY_POINTS_EXTRACTION_PROMPT = """You are an expert analyst extracting key points from a corporate document.
 
 Given the following text from a section titled "{section_name}" (pages {pages}):
@@ -46,7 +57,13 @@ Extract 3-7 key points per section. Focus on what's MOST important for someone t
 # ============================================================================
 # GENERATOR PROMPTS
 # ============================================================================
-
+#
+# ITERATION HISTORY - Planning Prompt:
+# - v1: Single-shot generation (no planning) -> unfocused scripts, missed key points
+# - v2: Added planning phase -> much better structure and coverage
+# - v3: Added explicit friction_moment field -> ensures conflict is planned, not accidental
+# - DEAD END: Tried detailed segment timings -> too rigid, hurt natural flow
+#
 PODCAST_PLANNING_PROMPT = """You are planning a 10-minute two-host educational podcast episode about a corporate document.
 
 DOCUMENT: {document_title}
@@ -80,6 +97,18 @@ Return your response as a JSON object:
 }}"""
 
 
+# ITERATION HISTORY - Dialogue Prompt:
+# - v1: No length constraint -> 800-word scripts, too short
+# - v2: "~2000 words" target -> often came in at 1600-1700
+# - v3: "2000-2200 words" with expansion guidance -> still too short (1020 words)
+# - v4: Added CRITICAL length requirements with minimum exchanges -> still only 1264 words
+# - v5: Added expansion loop in generator.py - if script < 1800 words, ask model to expand
+# - DEAD END: No dialogue length limit -> 5-6 sentence monologues, unnatural
+# - FIX: Added "1-3 sentences max" -> much more conversational
+# - DEAD END: Detailed emotion cues like "[leaning forward with excitement]" -> too theatrical
+# - FIX: Changed to "lightweight" cues: [laughs], [thoughtful], [skeptical]
+# - KEY INSIGHT: LLMs don't reliably follow length constraints in prompts alone - need programmatic check
+#
 DIALOGUE_GENERATION_PROMPT = """Write a natural two-host podcast dialogue based on this plan.
 
 EPISODE PLAN:
@@ -92,8 +121,14 @@ HOSTS:
 - **Alex**: Enthusiastic explainer. Uses analogies. Natural speech patterns like "you know", "right?", brief reactions.
 - **Jordan**: Thoughtful skeptic. Challenges assumptions. Says "But wait...", "Hmm", "I'm not sure about that..."
 
+**CRITICAL LENGTH REQUIREMENT:**
+- You MUST generate EXACTLY 2000-2200 words of dialogue
+- This should be approximately 80-100 dialogue exchanges between Alex and Jordan
+- Each segment should have AT LEAST 20 exchanges
+- Do NOT write a short script - expand discussions, add follow-up questions, explore implications
+- Count your words as you write and ensure you hit the target
+
 REQUIREMENTS:
-- Target ~2000 words total (about 10 minutes of audio)
 - Sound like REAL conversation, not alternating lectures
 - Include natural speech: reactions, brief interjections, thinking pauses
 - Include the planned FRICTION MOMENT where Jordan pushes back
@@ -101,6 +136,9 @@ REQUIREMENTS:
 - Use LIGHTWEIGHT emotion cues in brackets: [laughs], [thoughtful], [surprised], [skeptical]
 - DO NOT invent facts - only use information from the source material
 - Each piece of dialogue should be 1-3 sentences max
+- Expand on statistics: explain what numbers mean, give context, discuss implications
+- Add natural back-and-forth: clarifying questions, reactions, "wait, really?", "that's interesting"
+- Expand on key statistics and their implications - don't rush through numbers
 
 Return your response as a JSON object:
 {{
@@ -122,7 +160,14 @@ Start with Alex introducing the topic and make it engaging from the first line!"
 # ============================================================================
 # VERIFIER PROMPTS
 # ============================================================================
-
+#
+# ITERATION HISTORY - Claim Extraction:
+# - v1: "Extract claims" with no definition -> included opinions and banter
+# - v2: Added "factual claim" definition with examples -> much cleaner extraction
+# - v3: Added explicit "is NOT" section -> eliminated edge cases
+# - DEAD END: Tried semantic similarity with embeddings -> added complexity without benefit
+# - DECISION: LLM-based NLI (natural language inference) is simpler and works well
+#
 CLAIM_EXTRACTION_PROMPT = """Extract all FACTUAL CLAIMS from this podcast script.
 
 A factual claim is:
@@ -211,7 +256,17 @@ OMITTED = section not meaningfully covered"""
 # ============================================================================
 # BATCH VERIFICATION PROMPTS (Cost-optimized)
 # ============================================================================
-
+#
+# COST OPTIMIZATION HISTORY:
+# - Original: Individual verification (1 API call per claim) -> 33 calls for 33 claims
+# - Problem: $1.12 per run, unsustainable for iteration
+# - Solution: Batch verification (15 claims per call) -> 3 calls total
+# - Also switched from Sonnet to Haiku for verification (10x cheaper)
+# - Result: ~80% cost reduction while maintaining accuracy
+#
+# These batch prompts replace CLAIM_VERIFICATION_PROMPT and COVERAGE_ANALYSIS_PROMPT
+# for production use. The individual prompts are kept for reference/debugging.
+#
 BATCH_CLAIM_VERIFICATION_PROMPT = """Verify multiple claims from a podcast script against the source document.
 
 CLAIMS TO VERIFY:

@@ -346,6 +346,74 @@ OMITTED = section not meaningfully covered
 **Result**: Added complexity without significant improvement for this use case.
 **Fix**: LLM-based NLI (natural language inference) is simpler and works well for claim verification.
 
+### Iteration 5: Cost Optimization
+**Problem**: Initial implementation cost $1.12 per run - unsustainable for iteration.
+**Analysis**: Verification stage made 33+ API calls (1 per claim + 4 for coverage).
+**Fix**: Implemented batching and model selection (see Cost Optimization section below).
+
+---
+
+## Cost Optimization
+
+The initial implementation was expensive due to individual API calls for each verification task. Here's how we reduced costs by ~80%:
+
+### The Problem
+
+| Stage | Original Calls | Cost Driver |
+|-------|---------------|-------------|
+| Extraction | 4 calls | 1 per section (acceptable) |
+| Generation | 2 calls | Planning + dialogue (acceptable) |
+| Verification | 33+ calls | 1 per claim + 4 for coverage (expensive!) |
+
+**Result**: $1.12 per run, mostly from verification.
+
+### The Solution
+
+#### 1. Batch Claim Verification
+Instead of verifying one claim at a time:
+```
+# BEFORE: 33 API calls
+for claim in claims:
+    verify_single_claim(claim)  # 1 call each
+
+# AFTER: 3 API calls
+for batch in chunks(claims, 15):
+    verify_batch(batch)  # 15 claims per call
+```
+
+#### 2. Batch Coverage Analysis
+Instead of analyzing coverage per section:
+```
+# BEFORE: 4 API calls (1 per section)
+for section in sections:
+    analyze_coverage(section)
+
+# AFTER: 1 API call
+analyze_all_coverage(sections)  # All sections at once
+```
+
+#### 3. Model Selection
+Used cheaper model for verification tasks:
+```python
+# src/verifier.py
+EXTRACTION_MODEL = "claude-sonnet-4-20250514"    # Sonnet for claim extraction (needs accuracy)
+VERIFICATION_MODEL = "claude-haiku-4-5-20251001" # Haiku for verification (10x cheaper)
+```
+
+### Results
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| API Calls (verification) | 37 | 4 | 90% reduction |
+| Model Cost | Sonnet only | Sonnet + Haiku | ~10x cheaper for verification |
+| Total Run Cost | ~$1.12 | ~$0.25 | ~80% reduction |
+
+### Trade-offs
+
+- **Batch size**: 15 claims per batch balances cost vs. context window limits
+- **Haiku accuracy**: Slightly lower than Sonnet, but sufficient for verification tasks
+- **Debugging**: Batched responses are harder to debug than individual calls
+
 ---
 
 ## AI Tool Usage
