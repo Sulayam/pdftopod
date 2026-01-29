@@ -2,7 +2,7 @@
 # Vestas Annual Report 2024
 
 document:
-  path: "vestas_annual_report_2024.pdf"
+  path: "data/vestas_annual_report_2024.pdf"
   title: "Vestas Annual Report 2024"
 
 sections:

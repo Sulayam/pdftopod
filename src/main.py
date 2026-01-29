@@ -24,14 +24,71 @@ from .verifier import verify_script
 from .pdf_utils import compress_pdf, get_pdf_info
 
 
+def select_pdf_from_data_dir(data_dir: str = "data") -> str:
+    """
+    List available PDFs in the data directory and let user select one.
+
+    Args:
+        data_dir: Path to the data directory
+
+    Returns:
+        Path to selected PDF
+    """
+    data_path = Path(data_dir)
+
+    # Find all PDFs in data directory
+    pdf_files = sorted(data_path.glob("*.pdf"))
+
+    if not pdf_files:
+        print(f"Error: No PDF files found in '{data_dir}/' directory")
+        print(f"Please add a PDF to the {data_dir}/ directory")
+        sys.exit(1)
+
+    if len(pdf_files) == 1:
+        selected_pdf = pdf_files[0]
+        print(f"Found PDF: {selected_pdf.name}")
+        return str(selected_pdf)
+
+    # Multiple PDFs found - ask user to select
+    print(f"\nFound {len(pdf_files)} PDF(s) in '{data_dir}/' directory:")
+    for i, pdf in enumerate(pdf_files, 1):
+        size_mb = pdf.stat().st_size / (1024 * 1024)
+        print(f"  {i}. {pdf.name} ({size_mb:.1f} MB)")
+
+    while True:
+        choice = input(f"\nSelect a PDF (1-{len(pdf_files)}): ").strip()
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(pdf_files):
+                selected_pdf = pdf_files[idx]
+                print(f"Selected: {selected_pdf.name}\n")
+                return str(selected_pdf)
+            else:
+                print(f"Invalid choice. Please enter a number between 1 and {len(pdf_files)}")
+        except ValueError:
+            print(f"Invalid input. Please enter a number between 1 and {len(pdf_files)}")
+
+
 def load_config(config_path: str) -> Config:
     """Load configuration from YAML file."""
     with open(config_path, "r") as f:
         data = yaml.safe_load(f)
 
+    pdf_path = data["document"]["path"]
+
+    # If PDF is in data directory but doesn't exist, offer selection
+    if "data/" in pdf_path and not Path(pdf_path).exists():
+        print(f"PDF not found at {pdf_path}")
+        pdf_path = select_pdf_from_data_dir()
+
+    # If PDF doesn't exist at all, try selecting from data directory
+    elif not Path(pdf_path).exists():
+        print(f"PDF not found at {pdf_path}")
+        pdf_path = select_pdf_from_data_dir()
+
     return Config(
         document=DocumentConfig(
-            path=data["document"]["path"],
+            path=pdf_path,
             title=data["document"]["title"]
         ),
         sections=[

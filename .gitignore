@@ -1,23 +1,31 @@
-.env
-__pycache__/
-*.pyc
-output/
+# PDFs (input documents)
+data/*.pdf
 *.pdf
-.env
-EOF
+
+# Output artifacts
+output/*.md
+output/*.json
 
 # Local / editor
 .claude/
 .vscode/
+.idea/
 
 # Python
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
 
 # Secrets / env
 .env
+.env.local
 *.local.yaml
 *.local.json
 
-# Generated artifacts
-output/
+# OS
+.DS_Store
+.AppleDouble
+.LSOverride

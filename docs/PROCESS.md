@@ -429,6 +429,56 @@ No changes were made to "clean up" the prompt history - the iterations documente
 
 ---
 
+## AI Suggestions Rejected or Modified
+
+The following are examples where AI-generated suggestions were rejected or significantly modified:
+
+### 1. CrewAI Framework Suggestion
+**AI Suggested**: Use CrewAI or LangGraph for multi-agent orchestration.
+
+**Rejected Because**: The workflow is a simple linear pipeline (extract → generate → verify) without branching or cycles. Framework overhead would add complexity without benefit. The assessment explicitly states "a simple architecture well-justified beats a complex one poorly explained."
+
+### 2. Elaborate Host Personas
+**AI Suggested**: Create detailed backstories for podcast hosts (Alex is a former financial analyst, Jordan studied journalism, etc.).
+
+**Modified To**: Simple role descriptions ("enthusiastic explainer" and "thoughtful skeptic") with speech pattern examples.
+
+**Why**: Backstories don't improve output quality and add prompt length. The LLM needs behavioral guidance, not fictional biographies.
+
+### 3. Semantic Embedding Verification
+**AI Suggested**: Use text-embedding-3-small to create vector embeddings for claim verification via cosine similarity.
+
+**Rejected Because**: Added significant complexity (embedding generation, similarity thresholds, retrieval logic) while initial testing showed LLM-based verification worked adequately for this use case. The added precision wasn't worth the implementation cost for a 2-4 hour assessment.
+
+### 4. Real-Time Streaming Output
+**AI Suggested**: Stream dialogue generation token-by-token to show progress.
+
+**Rejected Because**: Adds complexity without improving output quality. Batch generation with JSON parsing is simpler and more reliable. The assessment doesn't require real-time output.
+
+### 5. Automatic Section Detection via PDF TOC
+**AI Suggested**: Parse PDF table of contents to auto-detect sections.
+
+**Rejected Because**:
+1. TOC parsing is unreliable across PDF styles
+2. The assessment explicitly uses page numbers for section specification
+3. Page-based configuration is simpler and more predictable for testing on unseen documents
+
+### 6. Multiple Verification Passes
+**AI Suggested**: Run 3 verification passes with different prompts and ensemble the results.
+
+**Modified To**: Single verification pass with batch processing and model selection for cost optimization.
+
+**Why**: Multiple passes would 3x the already-expensive verification cost. Batch verification with Haiku achieved acceptable accuracy at ~80% lower cost.
+
+### 7. Markdown Verification Report
+**AI Suggested**: Output verification report as Markdown for human readability.
+
+**Modified To**: JSON output with explanation in PROCESS.md.
+
+**Why**: The assessment mentions testing against unseen documents, implying automated validation. JSON is machine-parseable; Markdown would require parsing. Added explanation of this choice to satisfy "explain your choice" requirement.
+
+---
+
 ## Reflection Questions
 
 ### 1. Why did you choose this architecture/framework (or choose not to use one)?

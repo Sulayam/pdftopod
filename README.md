@@ -29,17 +29,23 @@ pip install -r requirements.txt
 export ANTHROPIC_API_KEY='your-api-key-here'
 ```
 
-### 3. Add Your PDF
+### 3. Add Your PDF(s)
 
-Place your PDF in the project directory (or update the path in config.yaml).
+Place your PDF file(s) in the `data/` directory:
+
+```bash
+cp your_document.pdf data/
+```
+
+The system supports multiple PDFs - you'll be prompted to select one if multiple files exist.
 
 ### 4. Configure Sections
 
-Edit `config.yaml` to specify which sections to cover:
+Edit `config.yaml` to specify which PDF to use and define the sections:
 
 ```yaml
 document:
-  path: "your_document.pdf"
+  path: "data/your_document.pdf"  # Path to PDF in data/ directory
   title: "Document Title"
 
 sections:
@@ -47,10 +53,24 @@ sections:
     pages: [1, 2, 3]  # 1-indexed page numbers
 ```
 
+If the configured PDF is not found, the system will automatically list available PDFs and prompt you to select one.
+
 ### 5. Run
 
 ```bash
 python -m src.main --config config.yaml --output output
+```
+
+**Interactive PDF Selection:**
+If multiple PDFs exist in the `data/` directory or if the configured PDF is not found, the system will automatically prompt you to select one:
+
+```
+Found 3 PDF(s) in 'data/' directory:
+  1. vestas_annual_report_2024.pdf (14.2 MB)
+  2. vestas_annual_report_2024_compressed.pdf (14.1 MB)
+  3. another_document.pdf (20.5 MB)
+
+Select a PDF (1-3):
 ```
 
 ### CLI Options
@@ -65,11 +85,13 @@ Options:
   --compress             Compress a PDF file and exit (utility mode)
 ```
 
-### Compress a PDF (Utility Mode)
+### Compress a Large PDF
+
+If your PDF is larger than the threshold (default 10 MB), it will be automatically compressed:
 
 ```bash
-# Compress a large PDF before processing
-python -m src.main --compress your_large_document.pdf
+# Manual compression
+python -m src.main --compress data/large_document.pdf
 ```
 
 ## Output
@@ -86,6 +108,9 @@ pdftopod/
 ├── README.md                 # This file
 ├── requirements.txt          # Python dependencies
 ├── config.yaml               # Section configuration
+├── data/                     # Input PDF documents (add your PDFs here)
+│   ├── .gitkeep              # Placeholder to track directory in git
+│   └── your_document.pdf     # e.g., vestas_annual_report_2024.pdf
 ├── src/
 │   ├── __init__.py
 │   ├── main.py               # CLI entry point & orchestrator
