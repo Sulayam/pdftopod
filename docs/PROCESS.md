@@ -427,6 +427,12 @@ This project was developed using Claude Code (Anthropic's CLI tool). The prompts
 
 No changes were made to "clean up" the prompt history - the iterations documented above reflect the actual development process.
 
+### Raw AI Collaboration Logs
+
+Per the brief ("don't clean up your prompt history"), I included the raw Claude Code session logs used during development. These are provided as JSONL files here:
+
+- `docs/ai_chat_history/`
+
 ---
 
 ## AI Suggestions Rejected or Modified
