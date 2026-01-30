@@ -172,7 +172,7 @@ The JSON verification report includes:
 
 Raw Claude Code session logs are included for transparency:
 
-- `docs/ai_chat_history/cf2dc0cd-e2d4-4619-8125-138549fb6c47.jsonl`
+- [`docs/ai_chat_history/cf2dc0cd-e2d4-4619-8125-138549fb6c47.jsonl`](docs/ai_chat_history/cf2dc0cd-e2d4-4619-8125-138549fb6c47.jsonl)
 
 ## Requirements
 
