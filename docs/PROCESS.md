@@ -432,6 +432,7 @@ No changes were made to "clean up" the prompt history - the iterations documente
 Per the brief ("don't clean up your prompt history"), I included the raw Claude Code session logs used during development. These are provided as JSONL files here:
 
 - `docs/ai_chat_history/`
+- `docs/ai_chat_history/cf2dc0cd-e2d4-4619-8125-138549fb6c47.jsonl`
 
 ---
 
